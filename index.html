@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>르탄해적 달리기 게임 - 실습 시험지</title>
+    <title>르탄이 달리기 게임 - 실습 시험지</title>
     <!--
     ==============================
     ====== Customizable CSS ======
@@ -202,50 +202,44 @@
             }
 
             function animate() {
-  if (gameOver) {
-    drawGameOverScreen();
-    return;
-  }
+                if (gameOver) {
+                    drawGameOverScreen();
+                    return;
+                }
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                timer++;
 
-  requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                backgroundImg(bgX);
+                backgroundImg(bgX + CANVAS_WIDTH);
+                bgX -= BG_MOVING_SPEED;
+                if (bgX < -CANVAS_WIDTH) bgX = 0;
+                bgmSound.play();
 
-  timer++;
-  backgroundImg(bgX);
-  backgroundImg(bgX + CANVAS_WIDTH);
-  bgX -= BG_MOVING_SPEED;
-  if (bgX < -CANVAS_WIDTH) bgX = 0;
+                if (timer % OBSTACLE_FREQUENCY === 0) obstacles.push(new Obstacle());
+                obstacles.forEach((obs, idx) => {
+                    obs.draw(); obs.x -= OBSTACLE_SPEED;
+                    if (obs.x < -OBSTACLE_WIDTH) {
+                        obstacles.splice(idx, 1);
+                        score += SCORE_PER_OBSTACLE;
+                        scoreText.textContent = '현재점수: ' + score;
+                        scoreSound.currentTime = 0;
+                        scoreSound.play();
+                    }
+                    if (isCollision(runner, obs)) {
+                        gameOver = true;
+                        bgmSound.pause();
+                        defeatSound.play();
+                    }
+                });
 
-  bgmSound.play();
-
-  if (timer % OBSTACLE_FREQUENCY === 0) obstacles.push(new Obstacle());
-
-  obstacles.forEach((obs, idx) => {
-    obs.draw();
-    obs.x -= OBSTACLE_SPEED;
-
-    if (obs.x < -OBSTACLE_WIDTH) {
-      obstacles.splice(idx, 1);
-      score += SCORE_PER_OBSTACLE;
-      scoreText.textContent = '현재점수: ' + score;
-      scoreSound.currentTime = 0;
-      scoreSound.play();
-    }
-
-    if (isCollision(runner, obs)) {
-      gameOver = true;
-      bgmSound.pause();
-      defeatSound.play();
-    }
-  });
-
-  runner.draw();
-
-  // 점점 더 빨라지는 효과
-  const SPEED_INCREMENT = 0.0005;
-  OBSTACLE_SPEED += SPEED_INCREMENT;
-  BG_MOVING_SPEED += SPEED_INCREMENT * 0.5;
-}
+                runner.draw();
+                if (jump) {
+                    runner.y = Math.max(MAX_JUMP_HEIGHT, runner.y - JUMP_SPEED);
+                } else {
+                    runner.y = Math.min(RUNNER_START_Y, runner.y + JUMP_SPEED);
+                }
+            }
 
             // 이벤트 처리
             document.addEventListener('keydown', e => {
